@@ -9,6 +9,9 @@ class Player:
         self.position = Vector2(x, y)
         self.speed = speed
         self.angle = 0
+        self.shoot_cooldown = 0
+        self.beam_length = 1000  # zasięg promienia
+
 
         self.collider = CircleCollider(x, y, radius)
         self.collider.position = self.position
@@ -40,3 +43,10 @@ class Player:
                  p.y + sin(self.angle - 2.5) * r * 0.8)
 
         pygame.draw.polygon(screen, (255, 220, 120), [tip, left, right])
+
+    def get_tip(self):
+        r = self.collider.radius
+        return Vector2(
+            self.position.x + cos(self.angle) * r,
+            self.position.y + sin(self.angle) * r
+        )
