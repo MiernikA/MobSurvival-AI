@@ -15,7 +15,7 @@ class Railgun:
         self.beam_timer = 0
 
     def fire(self, player, enemies, obstacles):
-        start = start = player.get_tip()
+        start = player.get_tip()
         angle = player.angle
 
         raw_end = Vector2(
@@ -23,33 +23,56 @@ class Railgun:
             start.y + sin(angle) * self.beam_length
         )
 
-        end = self._shorten_ray_by_obstacles(start, raw_end, obstacles)
+        hit_enemy, enemy_point, obstacle_point = self._find_first_hit(start, raw_end, enemies, obstacles)
+
+        if hit_enemy:
+            end = enemy_point
+        elif obstacle_point:
+            end = obstacle_point
+        else:
+            end = raw_end
 
         self.last_beam_start = start
         self.last_beam_end = end
         self.beam_timer = self.beam_time
 
-        killed = []
-        for enemy in enemies:
-            if self._ray_hits_circle(start, end, enemy):
-                killed.append(enemy)
+        return [hit_enemy] if hit_enemy else []
 
-        return killed
+    def _find_first_hit(self, start, end, enemies, obstacles):
+        closest_enemy = None
+        closest_enemy_point = None
+        closest_enemy_dist = float("inf")
 
-    def _shorten_ray_by_obstacles(self, start, end, obstacles):
-        closest_hit = None
-        closest_dist = float("inf")
+        closest_ob_point = None
+        closest_ob_dist = float("inf")
 
+        # Obstacles block the shot
         for ob in obstacles:
             hit_point = self._ray_circle_intersection(start, end, ob)
-
             if hit_point is not None:
                 dist = hit_point.sub(start).length()
-                if dist < closest_dist:
-                    closest_hit = hit_point
-                    closest_dist = dist
+                if dist < closest_ob_dist:
+                    closest_ob_point = hit_point
+                    closest_ob_dist = dist
 
-        return closest_hit if closest_hit else end
+        # Enemies can be hit but the beam stops at the first one
+        for enemy in enemies:
+            hit_point = self._ray_circle_intersection(start, end, enemy)
+            if hit_point is not None:
+                dist = hit_point.sub(start).length()
+                if dist < closest_enemy_dist:
+                    closest_enemy = enemy
+                    closest_enemy_point = hit_point
+                    closest_enemy_dist = dist
+
+        # If an obstacle is closer than the nearest enemy, no enemy is hit.
+        if closest_ob_point is not None and closest_ob_dist <= closest_enemy_dist:
+            return None, None, closest_ob_point
+
+        if closest_enemy:
+            return closest_enemy, closest_enemy_point, None
+
+        return None, None, None
 
     def _ray_circle_intersection(self, start, end, obstacle):
         cx, cy = obstacle.collider.position.x, obstacle.collider.position.y

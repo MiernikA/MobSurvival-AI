@@ -22,3 +22,9 @@ class Vector2:
         if l == 0:
             return Vector2()
         return Vector2(self.x / l, self.y / l)
+
+    def limit(self, max_len):
+        l = self.length()
+        if l == 0 or l <= max_len:
+            return Vector2(self.x, self.y)
+        return self.normalized().mul(max_len)
