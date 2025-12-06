@@ -44,11 +44,15 @@ def visible_to_player(enemy, player, obstacles):
     return not line_blocked_by_obstacles(enemy, player.position, obstacles)
 
 
-def flee_from_player(enemy, player):
+def flee_from_player(enemy, player, max_distance=400):   
     away = enemy.position.sub(player.position)
-    if away.length() == 0:
+    dist = away.length()
+    
+    if dist >= max_distance:
         return Vector2()
+
     return away.normalized().mul(enemy.attack_speed)
+
 
 
 def hide_from_player(enemy, player, obstacles):
